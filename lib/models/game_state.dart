@@ -49,7 +49,7 @@ class GameState extends ChangeNotifier {
 
   bool get canUndo => _undoStack.isNotEmpty && !isGameOver;
 
-  GameState({this.mode = GameMode.square, int initialHighScore = 0}) {
+  GameState({this.mode = GameMode.hex, int initialHighScore = 0}) {
     highScore = initialHighScore;
     _initGrid();
     _generateTray();
@@ -227,8 +227,14 @@ class GameState extends ChangeNotifier {
   }
 
   void _checkTrayRefill() {
-    if (tray.every((p) => p.isPlaced)) {
-      _generateTray();
+    // Replace each placed piece immediately with a new random one
+    for (int i = 0; i < tray.length; i++) {
+      if (tray[i].isPlaced) {
+        final catalog = mode == GameMode.square
+            ? generateSquareTray()
+            : generateHexTray();
+        tray[i] = catalog[0]; // grab one fresh piece
+      }
     }
   }
 

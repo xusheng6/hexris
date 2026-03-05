@@ -13,7 +13,7 @@ void main() async {
     DeviceOrientation.portraitUp,
   ]);
 
-  final highScore = await Storage.loadHighScore(GameMode.square);
+  final highScore = await Storage.loadHighScore(GameMode.hex);
 
   runApp(HexrisApp(initialHighScore: highScore));
 }

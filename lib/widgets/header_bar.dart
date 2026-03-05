@@ -89,6 +89,37 @@ class HeaderBar extends StatelessWidget {
     );
   }
 
+  void _showHowToPlay(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: GameColors.emptyCell,
+        title:
+            const Text('How to Play', style: TextStyle(color: Colors.white)),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Drag pieces from the tray onto the board.\n\n'
+              'Fill an entire row, column, or diagonal line to clear it and earn bonus points.\n\n'
+              'Clearing multiple lines at once gives a combo bonus.\n\n'
+              'The game ends when no remaining piece can fit on the board.\n\n'
+              'Tap the icon in the top-left to switch between hex and square modes.',
+              style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it', style: TextStyle(color: Colors.greenAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showSettings(BuildContext context, GameState state) {
     showDialog(
       context: context,
@@ -140,6 +171,17 @@ class HeaderBar extends StatelessWidget {
                   onTap: () {
                     state.resetHighScore();
                     Navigator.pop(context);
+                  },
+                ),
+                const Divider(color: Colors.white24),
+                ListTile(
+                  leading:
+                      const Icon(Icons.help_outline, color: Colors.white70),
+                  title: const Text('How to Play',
+                      style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showHowToPlay(context);
                   },
                 ),
               ],

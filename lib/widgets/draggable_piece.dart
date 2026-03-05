@@ -63,6 +63,17 @@ class DraggablePieceWidget extends StatelessWidget {
         anchorOffset: anchorOffset,
       ),
       feedback: feedback,
+      // Scale touch position from tray size to feedback size so the
+      // same logical spot on the piece stays under the finger.
+      dragAnchorStrategy: (draggable, context, position) {
+        final RenderBox renderObject =
+            context.findRenderObject()! as RenderBox;
+        final localTouch = renderObject.globalToLocal(position);
+        return Offset(
+          localTouch.dx / traySize.width * feedbackSize.width,
+          localTouch.dy / traySize.height * feedbackSize.height,
+        );
+      },
       childWhenDragging: Opacity(
         opacity: 0.3,
         child: child,
