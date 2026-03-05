@@ -1,8 +1,8 @@
 # Hexris
 
-A replica of the now-deprecated iOS puzzle game **Hexris**, rebuilt from scratch using Flutter/Dart.
+A block-puzzle game for iPad, built with Flutter/Dart. Inspired by a now-deprecated iOS game that is no longer available on the App Store — this project recreates its gameplay and visual style from scratch.
 
-The original game featured two block-puzzle modes — a classic 10x10 square grid and a hexagonal grid — where players drag and drop pieces to fill and clear lines. Since the original app is no longer available on the App Store, this project recreates the gameplay and visual style for iPad.
+The game features two modes — a classic 10x10 square grid and a hexagonal grid — where players drag and drop pieces to fill and clear lines.
 
 ## Screenshot
 
