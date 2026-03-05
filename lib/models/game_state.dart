@@ -3,6 +3,7 @@ import 'coordinates.dart';
 import 'piece.dart';
 import '../logic/square_grid_logic.dart';
 import '../logic/hex_grid_logic.dart';
+import '../utils/constants.dart';
 import '../utils/storage.dart';
 import '../utils/feedback_service.dart';
 
@@ -180,19 +181,34 @@ class GameState extends ChangeNotifier {
     if (completed.isNotEmpty) {
       final lineCount = SquareGridLogic.countCompletedLines(squareGrid);
       score += completed.length + (lineCount > 1 ? lineCount * 10 : 0);
-      SquareGridLogic.clearCells(squareGrid, completed);
       FeedbackService.trigger(
           lineCount > 1 ? GameSound.combo : GameSound.clear);
+      // Start clear animation — cells stay visible during animation
+      cellsToClear = completed;
+      isAnimating = true;
+      _updateHighScore();
+      _checkTrayRefill();
+      ghostCells = {};
+      notifyListeners();
+      // After animation, actually remove the cells
+      Future.delayed(GameConstants.clearAnimationDuration, () {
+        SquareGridLogic.clearCells(squareGrid, completed);
+        cellsToClear = {};
+        isAnimating = false;
+        _checkGameOver();
+        if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
+        notifyListeners();
+      });
     } else {
       FeedbackService.trigger(GameSound.place);
+      _updateHighScore();
+      _checkTrayRefill();
+      _checkGameOver();
+      if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
+      ghostCells = {};
+      notifyListeners();
     }
 
-    _updateHighScore();
-    _checkTrayRefill();
-    _checkGameOver();
-    if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
-    ghostCells = {};
-    notifyListeners();
     return true;
   }
 
@@ -210,19 +226,32 @@ class GameState extends ChangeNotifier {
     if (completed.isNotEmpty) {
       final lineCount = HexGridLogic.countCompletedLines(hexGrid);
       score += completed.length + (lineCount > 1 ? lineCount * 10 : 0);
-      HexGridLogic.clearCells(hexGrid, completed);
       FeedbackService.trigger(
           lineCount > 1 ? GameSound.combo : GameSound.clear);
+      cellsToClear = completed;
+      isAnimating = true;
+      _updateHighScore();
+      _checkTrayRefill();
+      ghostCells = {};
+      notifyListeners();
+      Future.delayed(GameConstants.clearAnimationDuration, () {
+        HexGridLogic.clearCells(hexGrid, completed);
+        cellsToClear = {};
+        isAnimating = false;
+        _checkGameOver();
+        if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
+        notifyListeners();
+      });
     } else {
       FeedbackService.trigger(GameSound.place);
+      _updateHighScore();
+      _checkTrayRefill();
+      _checkGameOver();
+      if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
+      ghostCells = {};
+      notifyListeners();
     }
 
-    _updateHighScore();
-    _checkTrayRefill();
-    _checkGameOver();
-    if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
-    ghostCells = {};
-    notifyListeners();
     return true;
   }
 

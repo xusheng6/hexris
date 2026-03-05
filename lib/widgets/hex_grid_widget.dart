@@ -5,32 +5,58 @@ import '../models/coordinates.dart';
 import '../models/piece.dart';
 import '../logic/hex_grid_logic.dart';
 import '../painters/hex_grid_painter.dart';
+import '../utils/constants.dart';
 import '../utils/hex_math.dart';
 import 'dart:math' as math;
 
-class HexGridWidget extends StatelessWidget {
+class HexGridWidget extends StatefulWidget {
   const HexGridWidget({super.key});
+
+  @override
+  State<HexGridWidget> createState() => _HexGridWidgetState();
+}
+
+class _HexGridWidgetState extends State<HexGridWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _clearController;
+
+  @override
+  void initState() {
+    super.initState();
+    _clearController = AnimationController(
+      vsync: this,
+      duration: GameConstants.clearAnimationDuration,
+    );
+  }
+
+  @override
+  void dispose() {
+    _clearController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxSize = math.min(constraints.maxWidth, constraints.maxHeight);
-        // Compute hex size to fit the board (9 hexes wide for radius 5)
-        // Pointy-top: width of hex grid = sqrt(3) * size * (2*radius - 1)
         final hexSize = maxSize / (math.sqrt(3) * 9 + 1);
         final center = Offset(maxSize / 2, maxSize / 2);
 
         return Consumer<GameState>(
           builder: (context, state, _) {
+            if (state.cellsToClear.isNotEmpty && !_clearController.isAnimating) {
+              _clearController.forward(from: 0.0);
+            }
+
             return DragTarget<PieceDragData>(
               onWillAcceptWithDetails: (details) => true,
               onMove: (details) {
                 final renderBox = context.findRenderObject() as RenderBox;
                 final local = renderBox.globalToLocal(details.offset);
-                // Adjust by anchorOffset so cursor maps to cell (0,0)
                 final adjusted = local + details.data.anchorOffset;
-                _updateGhost(state, adjusted, details.data.piece, hexSize, center);
+                _updateGhost(
+                    state, adjusted, details.data.piece, hexSize, center);
               },
               onLeave: (_) => state.clearGhost(),
               onAcceptWithDetails: (details) {
@@ -43,16 +69,23 @@ class HexGridWidget extends StatelessWidget {
                 }
               },
               builder: (context, candidateData, rejectedData) {
-                return CustomPaint(
-                  size: Size(maxSize, maxSize),
-                  painter: HexGridPainter(
-                    boardCells: HexGridLogic.boardCells,
-                    grid: state.hexGrid,
-                    ghostCells: state.ghostCells,
-                    ghostValid: state.ghostValid,
-                    hexSize: hexSize,
-                    center: center,
-                  ),
+                return AnimatedBuilder(
+                  animation: _clearController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      size: Size(maxSize, maxSize),
+                      painter: HexGridPainter(
+                        boardCells: HexGridLogic.boardCells,
+                        grid: state.hexGrid,
+                        ghostCells: state.ghostCells,
+                        ghostValid: state.ghostValid,
+                        hexSize: hexSize,
+                        center: center,
+                        cellsToClear: state.cellsToClear,
+                        clearProgress: _clearController.value,
+                      ),
+                    );
+                  },
                 );
               },
             );

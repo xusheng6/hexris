@@ -6,8 +6,31 @@ import '../models/piece.dart';
 import '../painters/square_grid_painter.dart';
 import '../utils/constants.dart';
 
-class SquareGridWidget extends StatelessWidget {
+class SquareGridWidget extends StatefulWidget {
   const SquareGridWidget({super.key});
+
+  @override
+  State<SquareGridWidget> createState() => _SquareGridWidgetState();
+}
+
+class _SquareGridWidgetState extends State<SquareGridWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _clearController;
+
+  @override
+  void initState() {
+    super.initState();
+    _clearController = AnimationController(
+      vsync: this,
+      duration: GameConstants.clearAnimationDuration,
+    );
+  }
+
+  @override
+  void dispose() {
+    _clearController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +45,16 @@ class SquareGridWidget extends StatelessWidget {
 
         return Consumer<GameState>(
           builder: (context, state, _) {
+            // Start animation when cellsToClear becomes non-empty
+            if (state.cellsToClear.isNotEmpty && !_clearController.isAnimating) {
+              _clearController.forward(from: 0.0);
+            }
+
             return DragTarget<PieceDragData>(
               onWillAcceptWithDetails: (details) => true,
               onMove: (details) {
                 final renderBox = context.findRenderObject() as RenderBox;
                 final local = renderBox.globalToLocal(details.offset);
-                // Adjust by anchorOffset so cursor maps to cell (0,0)
                 final adjusted = local + details.data.anchorOffset;
                 _updateGhost(state, adjusted, details.data.piece, cellSize);
               },
@@ -42,14 +69,21 @@ class SquareGridWidget extends StatelessWidget {
                 }
               },
               builder: (context, candidateData, rejectedData) {
-                return CustomPaint(
-                  size: Size(totalSize, totalSize),
-                  painter: SquareGridPainter(
-                    grid: state.squareGrid,
-                    ghostCells: state.ghostCells,
-                    ghostValid: state.ghostValid,
-                    cellSize: cellSize,
-                  ),
+                return AnimatedBuilder(
+                  animation: _clearController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      size: Size(totalSize, totalSize),
+                      painter: SquareGridPainter(
+                        grid: state.squareGrid,
+                        ghostCells: state.ghostCells,
+                        ghostValid: state.ghostValid,
+                        cellSize: cellSize,
+                        cellsToClear: state.cellsToClear,
+                        clearProgress: _clearController.value,
+                      ),
+                    );
+                  },
                 );
               },
             );
