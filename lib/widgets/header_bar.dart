@@ -95,28 +95,56 @@ class HeaderBar extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: GameColors.emptyCell,
         title: const Text('Settings', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.refresh, color: Colors.white70),
-              title: const Text('New Game',
-                  style: TextStyle(color: Colors.white)),
-              onTap: () {
-                state.reset();
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: Colors.white70),
-              title: const Text('Reset High Score',
-                  style: TextStyle(color: Colors.white)),
-              onTap: () {
-                state.resetHighScore();
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  secondary:
+                      const Icon(Icons.volume_up, color: Colors.white70),
+                  title: const Text('Sound',
+                      style: TextStyle(color: Colors.white)),
+                  value: Storage.soundEnabled,
+                  activeTrackColor: GameColors.green,
+                  onChanged: (val) {
+                    setDialogState(() => Storage.soundEnabled = val);
+                  },
+                ),
+                SwitchListTile(
+                  secondary:
+                      const Icon(Icons.vibration, color: Colors.white70),
+                  title: const Text('Haptics',
+                      style: TextStyle(color: Colors.white)),
+                  value: Storage.hapticsEnabled,
+                  activeTrackColor: GameColors.green,
+                  onChanged: (val) {
+                    setDialogState(() => Storage.hapticsEnabled = val);
+                  },
+                ),
+                const Divider(color: Colors.white24),
+                ListTile(
+                  leading: const Icon(Icons.refresh, color: Colors.white70),
+                  title: const Text('New Game',
+                      style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    state.reset();
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading:
+                      const Icon(Icons.delete_outline, color: Colors.white70),
+                  title: const Text('Reset High Score',
+                      style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    state.resetHighScore();
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

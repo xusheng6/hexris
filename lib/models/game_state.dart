@@ -4,6 +4,7 @@ import 'piece.dart';
 import '../logic/square_grid_logic.dart';
 import '../logic/hex_grid_logic.dart';
 import '../utils/storage.dart';
+import '../utils/feedback_service.dart';
 
 class _UndoSnapshot {
   final List<List<Color?>>? squareGrid;
@@ -180,11 +181,16 @@ class GameState extends ChangeNotifier {
       final lineCount = SquareGridLogic.countCompletedLines(squareGrid);
       score += completed.length + (lineCount > 1 ? lineCount * 10 : 0);
       SquareGridLogic.clearCells(squareGrid, completed);
+      FeedbackService.trigger(
+          lineCount > 1 ? GameSound.combo : GameSound.clear);
+    } else {
+      FeedbackService.trigger(GameSound.place);
     }
 
     _updateHighScore();
     _checkTrayRefill();
     _checkGameOver();
+    if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
     ghostCells = {};
     notifyListeners();
     return true;
@@ -205,11 +211,16 @@ class GameState extends ChangeNotifier {
       final lineCount = HexGridLogic.countCompletedLines(hexGrid);
       score += completed.length + (lineCount > 1 ? lineCount * 10 : 0);
       HexGridLogic.clearCells(hexGrid, completed);
+      FeedbackService.trigger(
+          lineCount > 1 ? GameSound.combo : GameSound.clear);
+    } else {
+      FeedbackService.trigger(GameSound.place);
     }
 
     _updateHighScore();
     _checkTrayRefill();
     _checkGameOver();
+    if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
     ghostCells = {};
     notifyListeners();
     return true;
