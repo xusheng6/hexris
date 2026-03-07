@@ -1,0 +1,32 @@
+App Name: Hexris
+
+Subtitle: Hex Block Puzzle Game
+
+SKU: hexris
+
+Bundle ID: com.hexris.hexris
+
+Category: Games > Puzzle
+
+Privacy Policy URL: https://github.com/xusheng6/hexris/blob/main/PRIVACY_POLICY.md
+
+Copyright: 2026 Xusheng Li
+
+Promotional Text:
+A fresh take on the classic block puzzle — play on a hexagonal grid and clear lines across three axes!
+
+Description:
+A block puzzle game with a twist — play on a hexagonal grid!
+
+Drag and drop pieces from the tray onto the board to fill and clear lines. Strategize your placements to clear multiple lines at once for bonus points.
+
+FEATURES
+• Two game modes: classic 10x10 square grid and hexagonal grid
+• Drag-and-drop controls
+• Line clearing across rows, columns, and hex axes
+• Undo your last move
+• Scoring with multi-line clear bonuses
+• High score tracking for each mode
+• Sound effects and haptic feedback
+
+Keywords: hexagon,puzzle,block,tetris,grid,brain,strategy,drop,classic,hex
