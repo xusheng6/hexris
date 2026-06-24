@@ -53,14 +53,25 @@ class HeaderBar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.emoji_events, color: Colors.amber, size: 28),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${state.highScore}',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                  // Tap the trophy / best score to view all saved high scores
+                  GestureDetector(
+                    onTap: () => _showHighScores(context, state),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.emoji_events,
+                            color: Colors.amber, size: 28),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${state.highScore}',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -120,6 +131,138 @@ class HeaderBar extends StatelessWidget {
     );
   }
 
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatDate(DateTime date) {
+    return '${_months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  Future<List<_HighScoreRow>> _loadHighScores() async {
+    final rows = <_HighScoreRow>[];
+    for (final mode in GameMode.values) {
+      final score = await Storage.loadHighScore(mode);
+      final date = await Storage.loadHighScoreDate(mode);
+      rows.add(_HighScoreRow(mode: mode, score: score, date: date));
+    }
+    // Show the highest score first.
+    rows.sort((a, b) => b.score.compareTo(a.score));
+    return rows;
+  }
+
+  void _showHighScores(BuildContext context, GameState state) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        // Held outside FutureBuilder so a reset can re-trigger the load.
+        Future<List<_HighScoreRow>> future = _loadHighScores();
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: GameColors.emptyCell,
+              title: const Text('High Scores',
+                  style: TextStyle(color: Colors.white)),
+              content: FutureBuilder<List<_HighScoreRow>>(
+                future: future,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const SizedBox(
+                      height: 80,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final rows = snapshot.data!;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: rows.map((row) {
+                      final isHex = row.mode == GameMode.hex;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          isHex ? Icons.hexagon : Icons.square_rounded,
+                          color: isHex ? GameColors.orange : GameColors.green,
+                        ),
+                        title: Text(
+                          isHex ? 'Hex' : 'Square',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          row.date != null
+                              ? 'Set ${_formatDate(row.date!)}'
+                              : 'Not played yet',
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 13),
+                        ),
+                        trailing: Text(
+                          '${row.score}',
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    final confirmed = await _confirmReset(context);
+                    if (confirmed) {
+                      await state.resetAllHighScores();
+                      setDialogState(() => future = _loadHighScores());
+                    }
+                  },
+                  child: const Text('Reset All',
+                      style: TextStyle(color: Colors.redAccent)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close',
+                      style: TextStyle(color: Colors.greenAccent)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Returns true if the user confirms resetting all high scores.
+  Future<bool> _confirmReset(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: GameColors.emptyCell,
+        title: const Text('Reset all high scores?',
+            style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'This will permanently clear your saved high scores for every mode. '
+          'This cannot be undone.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel',
+                style: TextStyle(color: Colors.greenAccent)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reset',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   void _showSettings(BuildContext context, GameState state) {
     showDialog(
       context: context,
@@ -165,12 +308,12 @@ class HeaderBar extends StatelessWidget {
                 ),
                 ListTile(
                   leading:
-                      const Icon(Icons.delete_outline, color: Colors.white70),
-                  title: const Text('Reset High Score',
+                      const Icon(Icons.emoji_events, color: Colors.white70),
+                  title: const Text('High Scores',
                       style: TextStyle(color: Colors.white)),
                   onTap: () {
-                    state.resetHighScore();
                     Navigator.pop(context);
+                    _showHighScores(context, state);
                   },
                 ),
                 const Divider(color: Colors.white24),
@@ -191,4 +334,12 @@ class HeaderBar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HighScoreRow {
+  final GameMode mode;
+  final int score;
+  final DateTime? date;
+
+  _HighScoreRow({required this.mode, required this.score, this.date});
 }

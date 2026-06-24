@@ -13,20 +13,33 @@ void main() async {
     DeviceOrientation.portraitUp,
   ]);
 
+  await Storage.init();
   final highScore = await Storage.loadHighScore(GameMode.hex);
+  final highScoreDate = await Storage.loadHighScoreDate(GameMode.hex);
 
-  runApp(HexrisApp(initialHighScore: highScore));
+  runApp(HexrisApp(
+    initialHighScore: highScore,
+    initialHighScoreDate: highScoreDate,
+  ));
 }
 
 class HexrisApp extends StatelessWidget {
   final int initialHighScore;
+  final DateTime? initialHighScoreDate;
 
-  const HexrisApp({super.key, required this.initialHighScore});
+  const HexrisApp({
+    super.key,
+    required this.initialHighScore,
+    this.initialHighScoreDate,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => GameState(initialHighScore: initialHighScore),
+      create: (_) => GameState(
+        initialHighScore: initialHighScore,
+        initialHighScoreDate: initialHighScoreDate,
+      ),
       child: MaterialApp(
         title: 'Hexris',
         debugShowCheckedModeBanner: false,

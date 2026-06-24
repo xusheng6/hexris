@@ -35,6 +35,7 @@ class GameState extends ChangeNotifier {
 
   int score = 0;
   int highScore = 0;
+  DateTime? highScoreDate;
   bool isGameOver = false;
   bool isAnimating = false;
 
@@ -50,8 +51,13 @@ class GameState extends ChangeNotifier {
 
   bool get canUndo => _undoStack.isNotEmpty && !isGameOver;
 
-  GameState({this.mode = GameMode.hex, int initialHighScore = 0}) {
+  GameState({
+    this.mode = GameMode.hex,
+    int initialHighScore = 0,
+    DateTime? initialHighScoreDate,
+  }) {
     highScore = initialHighScore;
+    highScoreDate = initialHighScoreDate;
     _initGrid();
     _generateTray();
   }
@@ -118,8 +124,9 @@ class GameState extends ChangeNotifier {
     _undoStack.clear();
     _initGrid();
     _generateTray();
-    Storage.loadHighScore(mode).then((hs) {
+    Storage.loadHighScore(mode).then((hs) async {
       highScore = hs;
+      highScoreDate = await Storage.loadHighScoreDate(mode);
       notifyListeners();
     });
     notifyListeners();
@@ -289,7 +296,8 @@ class GameState extends ChangeNotifier {
   void _updateHighScore() {
     if (score > highScore) {
       highScore = score;
-      Storage.saveHighScore(mode, highScore);
+      highScoreDate = DateTime.now();
+      Storage.saveHighScore(mode, highScore, highScoreDate!);
     }
   }
 
@@ -304,9 +312,13 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetHighScore() {
+  /// Clears the saved high score and date for every mode.
+  Future<void> resetAllHighScores() async {
+    for (final m in GameMode.values) {
+      await Storage.clearHighScore(m);
+    }
     highScore = 0;
-    Storage.saveHighScore(mode, 0);
+    highScoreDate = null;
     notifyListeners();
   }
 }

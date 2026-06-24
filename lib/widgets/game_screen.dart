@@ -86,6 +86,15 @@ class GameScreen extends StatelessWidget {
     );
   }
 
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatDate(DateTime date) {
+    return '${_months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
   Widget _buildGameOverOverlay(BuildContext context, GameState state) {
     return Container(
       color: Colors.black54,
@@ -124,6 +133,16 @@ class GameScreen extends StatelessWidget {
                   fontSize: 20,
                 ),
               ),
+              if (state.highScoreDate != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Set ${_formatDate(state.highScoreDate!)}',
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
