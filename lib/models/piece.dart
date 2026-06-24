@@ -103,24 +103,8 @@ final List<HexPiece> hexPieceCatalog = [
   // Fan shapes
   HexPiece('fan_1', [HexCoord(0, 0), HexCoord(1, 0), HexCoord(0, 1), HexCoord(-1, 1)]),
   HexPiece('fan_2', [HexCoord(0, 0), HexCoord(1, -1), HexCoord(1, 0), HexCoord(0, 1)]),
-  HexPiece('fan_3', [HexCoord(0, 0), HexCoord(-1, 0), HexCoord(0, 1), HexCoord(1, 0)]),
-  HexPiece('fan_4', [HexCoord(-1, 0), HexCoord(0, 0), HexCoord(1, 0), HexCoord(0, -1)]),
-  HexPiece('fan_5', [HexCoord(0, 0), HexCoord(0, -1), HexCoord(-1, 1), HexCoord(1, 0)]),
-  HexPiece('fan_6', [HexCoord(0, 0), HexCoord(-1, 1), HexCoord(0, 1), HexCoord(1, -1)]),
-  // L-shapes / bends
-  HexPiece('bend_1', [HexCoord(0, 0), HexCoord(1, 0), HexCoord(2, 0), HexCoord(2, 1)]),
-  HexPiece('bend_2', [HexCoord(0, 0), HexCoord(0, 1), HexCoord(0, 2), HexCoord(1, 2)]),
-  HexPiece('bend_3', [HexCoord(0, 0), HexCoord(-1, 1), HexCoord(-2, 2), HexCoord(-1, 2)]),
-  HexPiece('bend_4', [HexCoord(0, 0), HexCoord(0, 1), HexCoord(0, 2), HexCoord(-1, 3)]),
-  HexPiece('bend_5', [HexCoord(0, 0), HexCoord(1, 0), HexCoord(2, 0), HexCoord(1, 1)]),
-  HexPiece('bend_6', [HexCoord(0, 0), HexCoord(-1, 1), HexCoord(-2, 2), HexCoord(-2, 3)]),
-  // Y-shapes
-  HexPiece('y_1', [HexCoord(0, 0), HexCoord(1, -1), HexCoord(-1, 1), HexCoord(0, 1)]),
-  HexPiece('y_2', [HexCoord(0, 0), HexCoord(1, 0), HexCoord(-1, 0), HexCoord(0, 1)]),
   // S/Z zigzag 4-cell
   HexPiece('s_1', [HexCoord(0, 0), HexCoord(1, 0), HexCoord(1, 1), HexCoord(2, 1)]),
-  HexPiece('s_2', [HexCoord(0, 0), HexCoord(0, 1), HexCoord(1, 1), HexCoord(1, 2)]),
-  HexPiece('s_3', [HexCoord(0, 0), HexCoord(-1, 1), HexCoord(-1, 2), HexCoord(-2, 3)]),
 ];
 
 // --- Drag data ---
