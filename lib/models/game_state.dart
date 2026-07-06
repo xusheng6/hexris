@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'coordinates.dart';
 import 'piece.dart';
@@ -55,9 +56,13 @@ class GameState extends ChangeNotifier {
     this.mode = GameMode.hex,
     int initialHighScore = 0,
     DateTime? initialHighScoreDate,
+    Map<String, dynamic>? savedState,
   }) {
     highScore = initialHighScore;
     highScoreDate = initialHighScoreDate;
+    if (savedState != null && _tryRestore(savedState)) {
+      return;
+    }
     _initGrid();
     _generateTray();
   }
@@ -112,6 +117,7 @@ class GameState extends ChangeNotifier {
     score = snapshot.score;
     isGameOver = false;
     ghostCells = {};
+    _persist();
     notifyListeners();
   }
 
@@ -124,6 +130,7 @@ class GameState extends ChangeNotifier {
     _undoStack.clear();
     _initGrid();
     _generateTray();
+    _persist();
     Storage.loadHighScore(mode).then((hs) async {
       highScore = hs;
       highScoreDate = await Storage.loadHighScoreDate(mode);
@@ -204,6 +211,7 @@ class GameState extends ChangeNotifier {
         isAnimating = false;
         _checkGameOver();
         if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
+        _persist();
         notifyListeners();
       });
     } else {
@@ -213,6 +221,7 @@ class GameState extends ChangeNotifier {
       _checkGameOver();
       if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
       ghostCells = {};
+      _persist();
       notifyListeners();
     }
 
@@ -247,6 +256,7 @@ class GameState extends ChangeNotifier {
         isAnimating = false;
         _checkGameOver();
         if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
+        _persist();
         notifyListeners();
       });
     } else {
@@ -256,6 +266,7 @@ class GameState extends ChangeNotifier {
       _checkGameOver();
       if (isGameOver) FeedbackService.trigger(GameSound.gameOver);
       ghostCells = {};
+      _persist();
       notifyListeners();
     }
 
@@ -309,6 +320,7 @@ class GameState extends ChangeNotifier {
     _undoStack.clear();
     _initGrid();
     _generateTray();
+    _persist();
     notifyListeners();
   }
 
@@ -320,5 +332,102 @@ class GameState extends ChangeNotifier {
     highScore = 0;
     highScoreDate = null;
     notifyListeners();
+  }
+
+  // --- Persistence -----------------------------------------------------------
+
+  /// Serialize the current board, tray, score and mode so the game can be
+  /// resumed after the app is closed. The undo history and in-flight clear
+  /// animation are intentionally not persisted.
+  Map<String, dynamic> toJson() {
+    return {
+      'mode': mode.name,
+      'score': score,
+      'isGameOver': isGameOver,
+      if (mode == GameMode.square)
+        'squareGrid': squareGrid
+            .map((row) => row.map((c) => c?.toARGB32()).toList())
+            .toList(),
+      if (mode == GameMode.hex)
+        'hexGrid': hexGrid.entries
+            .map((e) =>
+                {'q': e.key.q, 'r': e.key.r, 'c': e.value.toARGB32()})
+            .toList(),
+      'tray': tray.map((p) {
+        return {
+          'cells': p.cells.map((cell) {
+            if (cell is SquareCoord) {
+              return {'row': cell.row, 'col': cell.col};
+            }
+            final h = cell as HexCoord;
+            return {'q': h.q, 'r': h.r};
+          }).toList(),
+          'color': p.color.toARGB32(),
+          'isPlaced': p.isPlaced,
+        };
+      }).toList(),
+    };
+  }
+
+  /// Write the current state to disk (fire-and-forget). Called after every
+  /// state-changing move so a quit at any point can be recovered.
+  void _persist() {
+    Storage.saveGame(jsonEncode(toJson()));
+  }
+
+  /// Persist the current state. Safe to call from an app-lifecycle handler.
+  void save() => _persist();
+
+  /// Attempt to rebuild the board, tray, score and mode from [json]. Returns
+  /// false (leaving the game untouched) if the snapshot is malformed, so the
+  /// caller can fall back to a fresh game.
+  bool _tryRestore(Map<String, dynamic> json) {
+    try {
+      mode = GameMode.values.firstWhere(
+        (m) => m.name == json['mode'],
+        orElse: () => mode,
+      );
+      score = json['score'] as int? ?? 0;
+      isGameOver = json['isGameOver'] as bool? ?? false;
+
+      squareGrid = SquareGridLogic.createEmptyGrid();
+      hexGrid = {};
+
+      if (mode == GameMode.square && json['squareGrid'] != null) {
+        final rows = json['squareGrid'] as List;
+        for (int r = 0; r < rows.length && r < squareGrid.length; r++) {
+          final cols = rows[r] as List;
+          for (int c = 0; c < cols.length && c < squareGrid[r].length; c++) {
+            final v = cols[c];
+            if (v != null) squareGrid[r][c] = Color(v as int);
+          }
+        }
+      } else if (mode == GameMode.hex && json['hexGrid'] != null) {
+        for (final e in (json['hexGrid'] as List)) {
+          hexGrid[HexCoord(e['q'] as int, e['r'] as int)] =
+              Color(e['c'] as int);
+        }
+      }
+
+      final trayJson = json['tray'] as List;
+      tray = trayJson.map((p) {
+        final cells = (p['cells'] as List).map<dynamic>((cell) {
+          if (mode == GameMode.square) {
+            return SquareCoord(cell['row'] as int, cell['col'] as int);
+          }
+          return HexCoord(cell['q'] as int, cell['r'] as int);
+        }).toList();
+        return TrayPiece(
+          cells: cells,
+          color: Color(p['color'] as int),
+          isPlaced: p['isPlaced'] as bool? ?? false,
+        );
+      }).toList();
+
+      if (tray.isEmpty) return false;
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
