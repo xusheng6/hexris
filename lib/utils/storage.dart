@@ -36,6 +36,25 @@ class Storage {
     await _prefs!.remove('highScoreDate_${mode.name}');
   }
 
+  // In-progress game snapshot (serialized as a JSON string).
+  static const String _savedGameKey = 'savedGame';
+
+  /// Persist the current game so it survives an app quit. [json] is the
+  /// encoded snapshot produced by [GameState.toJson].
+  static Future<void> saveGame(String json) async {
+    await init();
+    await _prefs!.setString(_savedGameKey, json);
+  }
+
+  /// The raw saved-game JSON, or null if there is no saved game. Requires
+  /// [init] to have completed (call it in main() before use).
+  static String? loadSavedGame() => _prefs?.getString(_savedGameKey);
+
+  static Future<void> clearSavedGame() async {
+    await init();
+    await _prefs!.remove(_savedGameKey);
+  }
+
   // Settings (persisted, default ON). Reads fall back to true until init().
   static bool get soundEnabled => _prefs?.getBool('soundEnabled') ?? true;
   static set soundEnabled(bool value) => _prefs?.setBool('soundEnabled', value);
