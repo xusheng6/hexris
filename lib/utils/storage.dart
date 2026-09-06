@@ -91,12 +91,9 @@ class Storage {
       _prefs?.setBool('hapticsEnabled', value);
 
   static bool get classicRulesEnabled =>
-      _prefs?.getBool('classicRulesEnabled') ??
-      _prefs?.getBool('blockCrushRulesEnabled') ??
-      false;
+      _prefs?.getBool('classicRulesEnabled') ?? false;
   static bool get hasRulesPreference =>
-      (_prefs?.containsKey('classicRulesEnabled') ?? false) ||
-      (_prefs?.containsKey('blockCrushRulesEnabled') ?? false);
+      _prefs?.containsKey('classicRulesEnabled') ?? false;
   static set classicRulesEnabled(bool value) =>
       _prefs?.setBool('classicRulesEnabled', value);
 }
