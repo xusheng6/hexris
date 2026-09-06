@@ -4,8 +4,8 @@
 
 - Display name: Hexris
 - Bundle identifier: `com.hexris.hexris`
-- Version: `1.0.2`
-- Build: `3`
+- Version: `1.0.3`
+- Build: `4`
 - Minimum iOS version: `13.0`
 - Devices: iPhone and iPad
 - Encryption declaration: no non-exempt encryption
@@ -33,7 +33,7 @@ Binary preparation does not create or complete the App Store Connect product
 page. Before submission, confirm the following in App Store Connect:
 
 - The app record uses bundle ID `com.hexris.hexris`.
-- Version `1.0.2` exists and build `3` has finished processing.
+- Version `1.0.3` exists and build `4` has finished processing.
 - App name, subtitle, description, keywords, support URL, and privacy-policy URL
   are complete.
 - Current iPhone and iPad screenshots are uploaded for every required display
@@ -46,5 +46,5 @@ page. Before submission, confirm the following in App Store Connect:
 - Export-compliance questions match `ITSAppUsesNonExemptEncryption = false`.
 - The latest developer agreements are accepted.
 
-Do not reuse build number `3` after uploading it. Increment the build component
+Do not reuse build number `4` after uploading it. Increment the build component
 in `pubspec.yaml` for every subsequent upload.
