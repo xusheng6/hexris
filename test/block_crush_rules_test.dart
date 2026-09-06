@@ -107,6 +107,7 @@ void main() {
         'assets/ai/replays/best_learned.json',
         'assets/ai/replays/best_expectimax.json',
         'assets/ai/replays/best_rollout.json',
+        'assets/ai/replays/best_neural_expectimax.json',
       ]) {
         final raw = await rootBundle.loadString(asset);
         final replay = AiReplay.fromJson(

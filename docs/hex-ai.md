@@ -54,6 +54,30 @@ the higher mean (3,721.55 vs 3,256.90) and ran in 41.8 seconds versus rollout's
 98.2 seconds. Rollout is therefore more robust in a typical run, while
 expectimax remains better for expected score and computational efficiency.
 
+## Neural experiment
+
+`tools/train_hex_nn.py` trains a 130 → 96 → 1 ReLU afterstate network by
+imitating expectimax choices. Inputs contain all 61 board cells, the two tray
+pieces not consumed by the candidate action, immediate reward, board density,
+and tray-slot identity. Training expands positions through all 12 rotations and
+reflections of the hexagon.
+
+The recorded run used 1,427 teacher positions, expanded to 17,124 training
+groups, with 159 unaugmented held-out positions. Top-one imitation accuracy was
+66.04%. Evaluation used 20 new seeds not used for teacher generation.
+
+| Agent | Mean | Median | Lower quartile | Maximum |
+|---|---:|---:|---:|---:|
+| neural one-ply | 678.70 | 497.0 | 250.5 | 2,565 |
+| neural + expectimax | 2,532.00 | 1,909.0 | 997.0 | **10,481** |
+| handcrafted expectimax | **5,073.90** | **4,325.5** | **1,807.0** | 10,357 |
+
+The neural model did not beat handcrafted expectimax overall. Its hybrid did
+produce the highest single paired score, but its much lower mean and median
+show that it generalizes inconsistently. More teacher positions, direct value
+targets instead of choice imitation, and iterative self-play/search
+distillation are the clearest next improvements.
+
 ## Reproducing or extending the run
 
 From the repository root:
@@ -64,7 +88,15 @@ python3 tools/hex_ai.py \
   --games 20 --max-moves 1000 --output assets/ai
 ```
 
-The command writes `benchmark.json` plus the best replay found for greedy,
+The neural trainer requires NumPy. Train and evaluate it with:
+
+```bash
+python3 tools/train_hex_nn.py \
+  --teacher-games 12 --positions 140 --epochs 8 \
+  --benchmark-games 20 --max-moves 1000
+```
+
+The first command writes `benchmark.json` plus the best replay found for greedy,
 learned, expectimax, and rollout agents. Increase the game count and training
 population for a more stable comparison; rollout is the slowest policy.
 
@@ -80,6 +112,7 @@ games have these final scores:
 | learned | 2,437 | 256 |
 | expectimax | 5,975 | 584 |
 | stochastic rollout | 4,887 | 472 |
+| neural + expectimax | 10,481 | 1,000 (benchmark cap) |
 
 A replay records the seed, actual piece stream, chosen tray slot, piece catalog
 index, anchor, replacement, clears, and cumulative score for every move. The
