@@ -60,8 +60,11 @@ class HeaderBar extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.emoji_events,
-                            color: Colors.amber, size: 28),
+                        const Icon(
+                          Icons.emoji_events,
+                          color: Colors.amber,
+                          size: 28,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '${state.highScore}',
@@ -105,8 +108,7 @@ class HeaderBar extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: GameColors.emptyCell,
-        title:
-            const Text('How to Play', style: TextStyle(color: Colors.white)),
+        title: const Text('How to Play', style: TextStyle(color: Colors.white)),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,14 +119,21 @@ class HeaderBar extends StatelessWidget {
               'Clearing multiple lines at once gives a combo bonus.\n\n'
               'The game ends when no remaining piece can fit on the board.\n\n'
               'Tap the icon in the top-left to switch between hex and square modes.',
-              style: TextStyle(color: Colors.white70, fontSize: 16, height: 1.5),
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                height: 1.5,
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Got it', style: TextStyle(color: Colors.greenAccent)),
+            child: const Text(
+              'Got it',
+              style: TextStyle(color: Colors.greenAccent),
+            ),
           ),
         ],
       ),
@@ -132,19 +141,29 @@ class HeaderBar extends StatelessWidget {
   }
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String _formatDate(DateTime date) {
     return '${_months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  Future<List<_HighScoreRow>> _loadHighScores() async {
+  Future<List<_HighScoreRow>> _loadHighScores(GameRules rules) async {
     final rows = <_HighScoreRow>[];
     for (final mode in GameMode.values) {
-      final score = await Storage.loadHighScore(mode);
-      final date = await Storage.loadHighScoreDate(mode);
+      final score = await Storage.loadHighScore(mode, rules: rules);
+      final date = await Storage.loadHighScoreDate(mode, rules: rules);
       rows.add(_HighScoreRow(mode: mode, score: score, date: date));
     }
     // Show the highest score first.
@@ -157,13 +176,15 @@ class HeaderBar extends StatelessWidget {
       context: context,
       builder: (context) {
         // Held outside FutureBuilder so a reset can re-trigger the load.
-        Future<List<_HighScoreRow>> future = _loadHighScores();
+        Future<List<_HighScoreRow>> future = _loadHighScores(state.rules);
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: GameColors.emptyCell,
-              title: const Text('High Scores',
-                  style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'High Scores',
+                style: TextStyle(color: Colors.white),
+              ),
               content: FutureBuilder<List<_HighScoreRow>>(
                 future: future,
                 builder: (context, snapshot) {
@@ -193,7 +214,9 @@ class HeaderBar extends StatelessWidget {
                               ? 'Set ${_formatDate(row.date!)}'
                               : 'Not played yet',
                           style: const TextStyle(
-                              color: Colors.white54, fontSize: 13),
+                            color: Colors.white54,
+                            fontSize: 13,
+                          ),
                         ),
                         trailing: Text(
                           '${row.score}',
@@ -214,16 +237,22 @@ class HeaderBar extends StatelessWidget {
                     final confirmed = await _confirmReset(context);
                     if (confirmed) {
                       await state.resetAllHighScores();
-                      setDialogState(() => future = _loadHighScores());
+                      setDialogState(
+                        () => future = _loadHighScores(state.rules),
+                      );
                     }
                   },
-                  child: const Text('Reset All',
-                      style: TextStyle(color: Colors.redAccent)),
+                  child: const Text(
+                    'Reset All',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Close',
-                      style: TextStyle(color: Colors.greenAccent)),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(color: Colors.greenAccent),
+                  ),
                 ),
               ],
             );
@@ -239,8 +268,10 @@ class HeaderBar extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: GameColors.emptyCell,
-        title: const Text('Reset all high scores?',
-            style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Reset all high scores?',
+          style: TextStyle(color: Colors.white),
+        ),
         content: const Text(
           'This will permanently clear your saved high scores for every mode. '
           'This cannot be undone.',
@@ -249,13 +280,17 @@ class HeaderBar extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel',
-                style: TextStyle(color: Colors.greenAccent)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.greenAccent),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset',
-                style: TextStyle(color: Colors.redAccent)),
+            child: const Text(
+              'Reset',
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -275,10 +310,11 @@ class HeaderBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 SwitchListTile(
-                  secondary:
-                      const Icon(Icons.volume_up, color: Colors.white70),
-                  title: const Text('Sound',
-                      style: TextStyle(color: Colors.white)),
+                  secondary: const Icon(Icons.volume_up, color: Colors.white70),
+                  title: const Text(
+                    'Sound',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   value: Storage.soundEnabled,
                   activeTrackColor: GameColors.green,
                   onChanged: (val) {
@@ -286,31 +322,57 @@ class HeaderBar extends StatelessWidget {
                   },
                 ),
                 SwitchListTile(
-                  secondary:
-                      const Icon(Icons.vibration, color: Colors.white70),
-                  title: const Text('Haptics',
-                      style: TextStyle(color: Colors.white)),
+                  secondary: const Icon(Icons.vibration, color: Colors.white70),
+                  title: const Text(
+                    'Haptics',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   value: Storage.hapticsEnabled,
                   activeTrackColor: GameColors.green,
                   onChanged: (val) {
                     setDialogState(() => Storage.hapticsEnabled = val);
                   },
                 ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.history, color: Colors.white70),
+                  title: const Text(
+                    'Block Crush Blitz rules',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: const Text(
+                    'Exact original pieces, odds, tray refill, and scoring',
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                  value: state.rules == GameRules.blockCrushBlitz,
+                  activeTrackColor: GameColors.green,
+                  onChanged: (val) {
+                    state.switchRules(
+                      val ? GameRules.blockCrushBlitz : GameRules.modern,
+                    );
+                    setDialogState(() {});
+                  },
+                ),
                 const Divider(color: Colors.white24),
                 ListTile(
                   leading: const Icon(Icons.refresh, color: Colors.white70),
-                  title: const Text('New Game',
-                      style: TextStyle(color: Colors.white)),
+                  title: const Text(
+                    'New Game',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     state.reset();
                     Navigator.pop(context);
                   },
                 ),
                 ListTile(
-                  leading:
-                      const Icon(Icons.emoji_events, color: Colors.white70),
-                  title: const Text('High Scores',
-                      style: TextStyle(color: Colors.white)),
+                  leading: const Icon(
+                    Icons.emoji_events,
+                    color: Colors.white70,
+                  ),
+                  title: const Text(
+                    'High Scores',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _showHighScores(context, state);
@@ -318,10 +380,14 @@ class HeaderBar extends StatelessWidget {
                 ),
                 const Divider(color: Colors.white24),
                 ListTile(
-                  leading:
-                      const Icon(Icons.help_outline, color: Colors.white70),
-                  title: const Text('How to Play',
-                      style: TextStyle(color: Colors.white)),
+                  leading: const Icon(
+                    Icons.help_outline,
+                    color: Colors.white70,
+                  ),
+                  title: const Text(
+                    'How to Play',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _showHowToPlay(context);

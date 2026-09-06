@@ -10,9 +10,7 @@ import 'widgets/game_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   await Storage.init();
 
@@ -34,26 +32,41 @@ void main() async {
           orElse: () => GameMode.hex,
         )
       : GameMode.hex;
-  final highScore = await Storage.loadHighScore(mode);
-  final highScoreDate = await Storage.loadHighScoreDate(mode);
+  final rules = savedState != null && Storage.hasRulesPreference
+      ? GameRules.values.firstWhere(
+          (r) => r.name == savedState!['rules'],
+          orElse: () => Storage.blockCrushRulesEnabled
+              ? GameRules.blockCrushBlitz
+              : GameRules.modern,
+        )
+      : (Storage.blockCrushRulesEnabled
+            ? GameRules.blockCrushBlitz
+            : GameRules.modern);
+  final highScore = await Storage.loadHighScore(mode, rules: rules);
+  final highScoreDate = await Storage.loadHighScoreDate(mode, rules: rules);
 
-  runApp(HexrisApp(
-    initialHighScore: highScore,
-    initialHighScoreDate: highScoreDate,
-    savedState: savedState,
-  ));
+  runApp(
+    HexrisApp(
+      initialHighScore: highScore,
+      initialHighScoreDate: highScoreDate,
+      savedState: savedState,
+      initialRules: rules,
+    ),
+  );
 }
 
 class HexrisApp extends StatefulWidget {
   final int initialHighScore;
   final DateTime? initialHighScoreDate;
   final Map<String, dynamic>? savedState;
+  final GameRules initialRules;
 
   const HexrisApp({
     super.key,
     required this.initialHighScore,
     this.initialHighScoreDate,
     this.savedState,
+    this.initialRules = GameRules.blockCrushBlitz,
   });
 
   @override
@@ -70,6 +83,7 @@ class _HexrisAppState extends State<HexrisApp> with WidgetsBindingObserver {
       initialHighScore: widget.initialHighScore,
       initialHighScoreDate: widget.initialHighScoreDate,
       savedState: widget.savedState,
+      rules: widget.initialRules,
     );
     WidgetsBinding.instance.addObserver(this);
   }

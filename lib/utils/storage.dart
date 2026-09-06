@@ -2,6 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum GameMode { square, hex }
 
+enum GameRules { modern, blockCrushBlitz }
+
 class Storage {
   static SharedPreferences? _prefs;
 
@@ -11,29 +13,54 @@ class Storage {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
-  static Future<int> loadHighScore(GameMode mode) async {
+  static String _highScoreKey(GameMode mode, GameRules rules) =>
+      rules == GameRules.modern
+      ? 'highScore_${mode.name}'
+      : 'highScore_${mode.name}_${rules.name}';
+
+  static String _highScoreDateKey(GameMode mode, GameRules rules) =>
+      rules == GameRules.modern
+      ? 'highScoreDate_${mode.name}'
+      : 'highScoreDate_${mode.name}_${rules.name}';
+
+  static Future<int> loadHighScore(
+    GameMode mode, {
+    GameRules rules = GameRules.modern,
+  }) async {
     await init();
-    return _prefs!.getInt('highScore_${mode.name}') ?? 0;
+    return _prefs!.getInt(_highScoreKey(mode, rules)) ?? 0;
   }
 
-  static Future<DateTime?> loadHighScoreDate(GameMode mode) async {
+  static Future<DateTime?> loadHighScoreDate(
+    GameMode mode, {
+    GameRules rules = GameRules.modern,
+  }) async {
     await init();
-    final raw = _prefs!.getString('highScoreDate_${mode.name}');
+    final raw = _prefs!.getString(_highScoreDateKey(mode, rules));
     return raw == null ? null : DateTime.tryParse(raw);
   }
 
   static Future<void> saveHighScore(
-      GameMode mode, int score, DateTime date) async {
+    GameMode mode,
+    int score,
+    DateTime date, {
+    GameRules rules = GameRules.modern,
+  }) async {
     await init();
-    await _prefs!.setInt('highScore_${mode.name}', score);
-    await _prefs!
-        .setString('highScoreDate_${mode.name}', date.toIso8601String());
+    await _prefs!.setInt(_highScoreKey(mode, rules), score);
+    await _prefs!.setString(
+      _highScoreDateKey(mode, rules),
+      date.toIso8601String(),
+    );
   }
 
-  static Future<void> clearHighScore(GameMode mode) async {
+  static Future<void> clearHighScore(
+    GameMode mode, {
+    GameRules rules = GameRules.modern,
+  }) async {
     await init();
-    await _prefs!.remove('highScore_${mode.name}');
-    await _prefs!.remove('highScoreDate_${mode.name}');
+    await _prefs!.remove(_highScoreKey(mode, rules));
+    await _prefs!.remove(_highScoreDateKey(mode, rules));
   }
 
   // In-progress game snapshot (serialized as a JSON string).
@@ -62,4 +89,11 @@ class Storage {
   static bool get hapticsEnabled => _prefs?.getBool('hapticsEnabled') ?? true;
   static set hapticsEnabled(bool value) =>
       _prefs?.setBool('hapticsEnabled', value);
+
+  static bool get blockCrushRulesEnabled =>
+      _prefs?.getBool('blockCrushRulesEnabled') ?? true;
+  static bool get hasRulesPreference =>
+      _prefs?.containsKey('blockCrushRulesEnabled') ?? false;
+  static set blockCrushRulesEnabled(bool value) =>
+      _prefs?.setBool('blockCrushRulesEnabled', value);
 }

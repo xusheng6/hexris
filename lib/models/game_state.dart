@@ -24,6 +24,7 @@ class _UndoSnapshot {
 
 class GameState extends ChangeNotifier {
   GameMode mode;
+  GameRules rules;
 
   // Square grid
   late List<List<Color?>> squareGrid;
@@ -54,6 +55,7 @@ class GameState extends ChangeNotifier {
 
   GameState({
     this.mode = GameMode.hex,
+    this.rules = GameRules.blockCrushBlitz,
     int initialHighScore = 0,
     DateTime? initialHighScoreDate,
     Map<String, dynamic>? savedState,
@@ -73,7 +75,9 @@ class GameState extends ChangeNotifier {
   }
 
   void _generateTray() {
-    tray = mode == GameMode.square ? generateSquareTray() : generateHexTray();
+    tray = mode == GameMode.square
+        ? generateSquareTray(rules: rules)
+        : generateHexTray(rules: rules);
   }
 
   // Deep copy helpers
@@ -87,21 +91,25 @@ class GameState extends ChangeNotifier {
 
   List<TrayPiece> _copyTray() {
     return tray
-        .map((p) => TrayPiece(
-              cells: List.from(p.cells),
-              color: p.color,
-              isPlaced: p.isPlaced,
-            ))
+        .map(
+          (p) => TrayPiece(
+            cells: List.from(p.cells),
+            color: p.color,
+            isPlaced: p.isPlaced,
+          ),
+        )
         .toList();
   }
 
   void _saveSnapshot() {
-    _undoStack.add(_UndoSnapshot(
-      squareGrid: mode == GameMode.square ? _copySquareGrid() : null,
-      hexGrid: mode == GameMode.hex ? _copyHexGrid() : null,
-      tray: _copyTray(),
-      score: score,
-    ));
+    _undoStack.add(
+      _UndoSnapshot(
+        squareGrid: mode == GameMode.square ? _copySquareGrid() : null,
+        hexGrid: mode == GameMode.hex ? _copyHexGrid() : null,
+        tray: _copyTray(),
+        score: score,
+      ),
+    );
   }
 
   void undo() {
@@ -131,9 +139,30 @@ class GameState extends ChangeNotifier {
     _initGrid();
     _generateTray();
     _persist();
-    Storage.loadHighScore(mode).then((hs) async {
+    Storage.loadHighScore(mode, rules: rules).then((hs) async {
       highScore = hs;
-      highScoreDate = await Storage.loadHighScoreDate(mode);
+      highScoreDate = await Storage.loadHighScoreDate(mode, rules: rules);
+      notifyListeners();
+    });
+    notifyListeners();
+  }
+
+  void switchRules(GameRules newRules) {
+    if (rules == newRules) return;
+    rules = newRules;
+    Storage.blockCrushRulesEnabled = rules == GameRules.blockCrushBlitz;
+    score = 0;
+    isGameOver = false;
+    isAnimating = false;
+    cellsToClear = {};
+    ghostCells = {};
+    _undoStack.clear();
+    _initGrid();
+    _generateTray();
+    _persist();
+    Storage.loadHighScore(mode, rules: rules).then((hs) async {
+      highScore = hs;
+      highScoreDate = await Storage.loadHighScoreDate(mode, rules: rules);
       notifyListeners();
     });
     notifyListeners();
@@ -189,14 +218,17 @@ class GameState extends ChangeNotifier {
 
     SquareGridLogic.place(squareGrid, cells, anchor, piece.color);
     piece.isPlaced = true;
-    score += cells.length;
+    if (rules == GameRules.modern) score += cells.length;
 
     final completed = SquareGridLogic.findCompletedLines(squareGrid);
     if (completed.isNotEmpty) {
       final lineCount = SquareGridLogic.countCompletedLines(squareGrid);
-      score += completed.length + (lineCount > 1 ? lineCount * 10 : 0);
+      score += rules == GameRules.blockCrushBlitz
+          ? blockCrushClearScore(completed.length, lineCount)
+          : completed.length + (lineCount > 1 ? lineCount * 10 : 0);
       FeedbackService.trigger(
-          lineCount > 1 ? GameSound.combo : GameSound.clear);
+        lineCount > 1 ? GameSound.combo : GameSound.clear,
+      );
       // Start clear animation — cells stay visible during animation
       cellsToClear = completed;
       isAnimating = true;
@@ -236,14 +268,17 @@ class GameState extends ChangeNotifier {
 
     HexGridLogic.place(hexGrid, cells, anchor, piece.color);
     piece.isPlaced = true;
-    score += cells.length;
+    if (rules == GameRules.modern) score += cells.length;
 
     final completed = HexGridLogic.findCompletedLines(hexGrid);
     if (completed.isNotEmpty) {
       final lineCount = HexGridLogic.countCompletedLines(hexGrid);
-      score += completed.length + (lineCount > 1 ? lineCount * 10 : 0);
+      score += rules == GameRules.blockCrushBlitz
+          ? blockCrushClearScore(completed.length, lineCount)
+          : completed.length + (lineCount > 1 ? lineCount * 10 : 0);
       FeedbackService.trigger(
-          lineCount > 1 ? GameSound.combo : GameSound.clear);
+        lineCount > 1 ? GameSound.combo : GameSound.clear,
+      );
       cellsToClear = completed;
       isAnimating = true;
       _updateHighScore();
@@ -274,12 +309,24 @@ class GameState extends ChangeNotifier {
   }
 
   void _checkTrayRefill() {
-    // Replace each placed piece immediately with a new random one
+    // Block Crush Blitz refills square pieces only after the complete batch is
+    // consumed. Its hex mode, like Hexris' modern rules, replaces immediately.
+    if (rules == GameRules.blockCrushBlitz &&
+        mode == GameMode.square &&
+        tray.any((piece) => !piece.isPlaced)) {
+      return;
+    }
+
+    if (rules == GameRules.blockCrushBlitz && mode == GameMode.square) {
+      _generateTray();
+      return;
+    }
+
     for (int i = 0; i < tray.length; i++) {
       if (tray[i].isPlaced) {
         final catalog = mode == GameMode.square
-            ? generateSquareTray()
-            : generateHexTray();
+            ? generateSquareTray(rules: rules)
+            : generateHexTray(rules: rules);
         tray[i] = catalog[0]; // grab one fresh piece
       }
     }
@@ -290,14 +337,16 @@ class GameState extends ChangeNotifier {
     if (remaining.isEmpty) return;
 
     if (mode == GameMode.square) {
-      final pieceCellsList =
-          remaining.map((p) => p.cells.cast<SquareCoord>()).toList();
+      final pieceCellsList = remaining
+          .map((p) => p.cells.cast<SquareCoord>())
+          .toList();
       if (!SquareGridLogic.canFitAny(squareGrid, pieceCellsList)) {
         isGameOver = true;
       }
     } else {
-      final pieceCellsList =
-          remaining.map((p) => p.cells.cast<HexCoord>()).toList();
+      final pieceCellsList = remaining
+          .map((p) => p.cells.cast<HexCoord>())
+          .toList();
       if (!HexGridLogic.canFitAny(hexGrid, pieceCellsList)) {
         isGameOver = true;
       }
@@ -308,7 +357,7 @@ class GameState extends ChangeNotifier {
     if (score > highScore) {
       highScore = score;
       highScoreDate = DateTime.now();
-      Storage.saveHighScore(mode, highScore, highScoreDate!);
+      Storage.saveHighScore(mode, highScore, highScoreDate!, rules: rules);
     }
   }
 
@@ -327,7 +376,9 @@ class GameState extends ChangeNotifier {
   /// Clears the saved high score and date for every mode.
   Future<void> resetAllHighScores() async {
     for (final m in GameMode.values) {
-      await Storage.clearHighScore(m);
+      for (final r in GameRules.values) {
+        await Storage.clearHighScore(m, rules: r);
+      }
     }
     highScore = 0;
     highScoreDate = null;
@@ -342,6 +393,7 @@ class GameState extends ChangeNotifier {
   Map<String, dynamic> toJson() {
     return {
       'mode': mode.name,
+      'rules': rules.name,
       'score': score,
       'isGameOver': isGameOver,
       if (mode == GameMode.square)
@@ -350,8 +402,7 @@ class GameState extends ChangeNotifier {
             .toList(),
       if (mode == GameMode.hex)
         'hexGrid': hexGrid.entries
-            .map((e) =>
-                {'q': e.key.q, 'r': e.key.r, 'c': e.value.toARGB32()})
+            .map((e) => {'q': e.key.q, 'r': e.key.r, 'c': e.value.toARGB32()})
             .toList(),
       'tray': tray.map((p) {
         return {
@@ -387,6 +438,10 @@ class GameState extends ChangeNotifier {
         (m) => m.name == json['mode'],
         orElse: () => mode,
       );
+      rules = GameRules.values.firstWhere(
+        (r) => r.name == json['rules'],
+        orElse: () => rules,
+      );
       score = json['score'] as int? ?? 0;
       isGameOver = json['isGameOver'] as bool? ?? false;
 
@@ -404,8 +459,9 @@ class GameState extends ChangeNotifier {
         }
       } else if (mode == GameMode.hex && json['hexGrid'] != null) {
         for (final e in (json['hexGrid'] as List)) {
-          hexGrid[HexCoord(e['q'] as int, e['r'] as int)] =
-              Color(e['c'] as int);
+          hexGrid[HexCoord(e['q'] as int, e['r'] as int)] = Color(
+            e['c'] as int,
+          );
         }
       }
 
@@ -430,4 +486,20 @@ class GameState extends ChangeNotifier {
       return false;
     }
   }
+}
+
+/// Score awarded by Block Crush Blitz for a clear. Placement itself scores 0.
+int blockCrushClearScore(int clearedCells, int lineCount) {
+  final lineBonus = lineCount * (10 + 5 * (lineCount - 1));
+  return clearedCells + lineBonus;
+}
+
+/// Original cumulative score threshold for the displayed level.
+int blockCrushLevelThreshold(int level) {
+  if (level <= 0) return 0;
+  var threshold = 80;
+  for (var current = 2; current <= level; current++) {
+    threshold += (current ~/ 10) * 40 + 70 + 30 * (current - 1);
+  }
+  return threshold;
 }
