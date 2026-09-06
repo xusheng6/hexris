@@ -253,7 +253,7 @@ final List<HexPiece> hexPieceCatalog = [
   ]),
 ];
 
-// --- Block Crush Blitz 1.7 catalogs ---------------------------------------
+// --- Classic rules catalogs -----------------------------------------------
 //
 // Recovered from the decrypted ARM64 executable. The original stores square
 // pieces as 5x5 ASCII masks and hex pieces as 4x4 masks. Hex masks use an
@@ -273,7 +273,7 @@ class WeightedSquarePieceFamily {
   });
 }
 
-const List<WeightedSquarePieceFamily> blockCrushSquareFamilies = [
+const List<WeightedSquarePieceFamily> classicSquareFamilies = [
   WeightedSquarePieceFamily(
     id: 'line5',
     weight: 2,
@@ -443,7 +443,7 @@ const List<WeightedSquarePieceFamily> blockCrushSquareFamilies = [
   ),
 ];
 
-const List<String> _blockCrushHexMasks = [
+const List<String> _classicHexMasks = [
   '0000010000000000',
   '0010011000100000',
   '0000011001100000',
@@ -468,7 +468,7 @@ const List<String> _blockCrushHexMasks = [
   '0000101001100000',
 ];
 
-List<HexCoord> _decodeBlockCrushHexMask(String mask) {
+List<HexCoord> _decodeClassicHexMask(String mask) {
   final cells = <HexCoord>[];
   for (var y = 0; y < 4; y++) {
     for (var x = 0; x < 4; x++) {
@@ -481,16 +481,16 @@ List<HexCoord> _decodeBlockCrushHexMask(String mask) {
   return cells.map((c) => HexCoord(c.q - origin.q, c.r - origin.r)).toList();
 }
 
-final List<HexPiece> blockCrushHexPieceCatalog = List.generate(
-  _blockCrushHexMasks.length,
+final List<HexPiece> classicHexPieceCatalog = List.generate(
+  _classicHexMasks.length,
   (index) => HexPiece(
-    'blockCrushHex${index + 1}',
-    _decodeBlockCrushHexMask(_blockCrushHexMasks[index]),
+    'classicHex${index + 1}',
+    _decodeClassicHexMask(_classicHexMasks[index]),
   ),
   growable: false,
 );
 
-int blockCrushHexColorIndex(int catalogIndex) {
+int classicHexColorIndex(int catalogIndex) {
   if (catalogIndex == 0) return 1;
   if (catalogIndex <= 3) return 2;
   if (catalogIndex <= 6) return 3;
@@ -535,14 +535,14 @@ List<TrayPiece> generateSquareTray({
 }) {
   final rng = random ?? _random;
   return List.generate(3, (_) {
-    if (rules == GameRules.blockCrushBlitz) {
-      final totalWeight = blockCrushSquareFamilies.fold<int>(
+    if (rules == GameRules.classic) {
+      final totalWeight = classicSquareFamilies.fold<int>(
         0,
         (sum, family) => sum + family.weight,
       );
       var roll = rng.nextInt(totalWeight);
       late WeightedSquarePieceFamily family;
-      for (final candidate in blockCrushSquareFamilies) {
+      for (final candidate in classicSquareFamilies) {
         if (roll < candidate.weight) {
           family = candidate;
           break;
@@ -552,7 +552,7 @@ List<TrayPiece> generateSquareTray({
       final piece = family.variants[rng.nextInt(family.variants.length)];
       return TrayPiece(
         cells: piece.cells,
-        color: GameColors.blockCrushColor(family.originalColorIndex),
+        color: GameColors.classicColor(family.originalColorIndex),
       );
     }
     final piece = squarePieceCatalog[rng.nextInt(squarePieceCatalog.length)];
@@ -568,12 +568,12 @@ List<TrayPiece> generateHexTray({
 }) {
   final rng = random ?? _random;
   return List.generate(3, (_) {
-    if (rules == GameRules.blockCrushBlitz) {
-      final index = rng.nextInt(blockCrushHexPieceCatalog.length);
-      final piece = blockCrushHexPieceCatalog[index];
+    if (rules == GameRules.classic) {
+      final index = rng.nextInt(classicHexPieceCatalog.length);
+      final piece = classicHexPieceCatalog[index];
       return TrayPiece(
         cells: piece.cells,
-        color: GameColors.blockCrushColor(blockCrushHexColorIndex(index)),
+        color: GameColors.classicColor(classicHexColorIndex(index)),
       );
     }
     final piece = hexPieceCatalog[rng.nextInt(hexPieceCatalog.length)];

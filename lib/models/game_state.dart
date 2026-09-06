@@ -55,7 +55,7 @@ class GameState extends ChangeNotifier {
 
   GameState({
     this.mode = GameMode.hex,
-    this.rules = GameRules.blockCrushBlitz,
+    this.rules = GameRules.modern,
     int initialHighScore = 0,
     DateTime? initialHighScoreDate,
     Map<String, dynamic>? savedState,
@@ -150,7 +150,7 @@ class GameState extends ChangeNotifier {
   void switchRules(GameRules newRules) {
     if (rules == newRules) return;
     rules = newRules;
-    Storage.blockCrushRulesEnabled = rules == GameRules.blockCrushBlitz;
+    Storage.classicRulesEnabled = rules == GameRules.classic;
     score = 0;
     isGameOver = false;
     isAnimating = false;
@@ -223,8 +223,8 @@ class GameState extends ChangeNotifier {
     final completed = SquareGridLogic.findCompletedLines(squareGrid);
     if (completed.isNotEmpty) {
       final lineCount = SquareGridLogic.countCompletedLines(squareGrid);
-      score += rules == GameRules.blockCrushBlitz
-          ? blockCrushClearScore(completed.length, lineCount)
+      score += rules == GameRules.classic
+          ? classicClearScore(completed.length, lineCount)
           : completed.length + (lineCount > 1 ? lineCount * 10 : 0);
       FeedbackService.trigger(
         lineCount > 1 ? GameSound.combo : GameSound.clear,
@@ -273,8 +273,8 @@ class GameState extends ChangeNotifier {
     final completed = HexGridLogic.findCompletedLines(hexGrid);
     if (completed.isNotEmpty) {
       final lineCount = HexGridLogic.countCompletedLines(hexGrid);
-      score += rules == GameRules.blockCrushBlitz
-          ? blockCrushClearScore(completed.length, lineCount)
+      score += rules == GameRules.classic
+          ? classicClearScore(completed.length, lineCount)
           : completed.length + (lineCount > 1 ? lineCount * 10 : 0);
       FeedbackService.trigger(
         lineCount > 1 ? GameSound.combo : GameSound.clear,
@@ -309,15 +309,15 @@ class GameState extends ChangeNotifier {
   }
 
   void _checkTrayRefill() {
-    // Block Crush Blitz refills square pieces only after the complete batch is
-    // consumed. Its hex mode, like Hexris' modern rules, replaces immediately.
-    if (rules == GameRules.blockCrushBlitz &&
+    // Classic rules refill square pieces only after the complete batch is
+    // consumed. Hex mode, like modern rules, replaces immediately.
+    if (rules == GameRules.classic &&
         mode == GameMode.square &&
         tray.any((piece) => !piece.isPlaced)) {
       return;
     }
 
-    if (rules == GameRules.blockCrushBlitz && mode == GameMode.square) {
+    if (rules == GameRules.classic && mode == GameMode.square) {
       _generateTray();
       return;
     }
@@ -488,14 +488,14 @@ class GameState extends ChangeNotifier {
   }
 }
 
-/// Score awarded by Block Crush Blitz for a clear. Placement itself scores 0.
-int blockCrushClearScore(int clearedCells, int lineCount) {
+/// Score awarded by classic rules for a clear. Placement itself scores 0.
+int classicClearScore(int clearedCells, int lineCount) {
   final lineBonus = lineCount * (10 + 5 * (lineCount - 1));
   return clearedCells + lineBonus;
 }
 
 /// Original cumulative score threshold for the displayed level.
-int blockCrushLevelThreshold(int level) {
+int classicLevelThreshold(int level) {
   if (level <= 0) return 0;
   var threshold = 80;
   for (var current = 2; current <= level; current++) {

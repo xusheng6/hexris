@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 enum GameMode { square, hex }
 
-enum GameRules { modern, blockCrushBlitz }
+enum GameRules { modern, classic }
 
 class Storage {
   static SharedPreferences? _prefs;
@@ -90,10 +90,13 @@ class Storage {
   static set hapticsEnabled(bool value) =>
       _prefs?.setBool('hapticsEnabled', value);
 
-  static bool get blockCrushRulesEnabled =>
-      _prefs?.getBool('blockCrushRulesEnabled') ?? true;
+  static bool get classicRulesEnabled =>
+      _prefs?.getBool('classicRulesEnabled') ??
+      _prefs?.getBool('blockCrushRulesEnabled') ??
+      false;
   static bool get hasRulesPreference =>
-      _prefs?.containsKey('blockCrushRulesEnabled') ?? false;
-  static set blockCrushRulesEnabled(bool value) =>
-      _prefs?.setBool('blockCrushRulesEnabled', value);
+      (_prefs?.containsKey('classicRulesEnabled') ?? false) ||
+      (_prefs?.containsKey('blockCrushRulesEnabled') ?? false);
+  static set classicRulesEnabled(bool value) =>
+      _prefs?.setBool('classicRulesEnabled', value);
 }

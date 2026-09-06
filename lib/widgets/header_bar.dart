@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../models/game_state.dart';
 import '../utils/colors.dart';
 import '../utils/storage.dart';
-import 'ai_replay_screen.dart';
 
 class HeaderBar extends StatelessWidget {
   const HeaderBar({super.key});
@@ -337,41 +336,20 @@ class HeaderBar extends StatelessWidget {
                 SwitchListTile(
                   secondary: const Icon(Icons.history, color: Colors.white70),
                   title: const Text(
-                    'Block Crush Blitz rules',
+                    'Classic rules',
                     style: TextStyle(color: Colors.white),
                   ),
                   subtitle: const Text(
                     'Exact original pieces, odds, tray refill, and scoring',
                     style: TextStyle(color: Colors.white54),
                   ),
-                  value: state.rules == GameRules.blockCrushBlitz,
+                  value: state.rules == GameRules.classic,
                   activeTrackColor: GameColors.green,
                   onChanged: (val) {
                     state.switchRules(
-                      val ? GameRules.blockCrushBlitz : GameRules.modern,
+                      val ? GameRules.classic : GameRules.modern,
                     );
                     setDialogState(() {});
-                  },
-                ),
-                const Divider(color: Colors.white24),
-                ListTile(
-                  leading: const Icon(Icons.smart_toy, color: Colors.white70),
-                  title: const Text(
-                    'AI best-game replays',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: const Text(
-                    'Watch greedy, trained, and expectimax agents',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) => const AiReplayScreen(),
-                      ),
-                    );
                   },
                 ),
                 const Divider(color: Colors.white24),

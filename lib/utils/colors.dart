@@ -28,7 +28,7 @@ class GameColors {
   // Stable stand-ins for the original numbered block textures. The original
   // binds color to shape family; keeping this table indexed from one preserves
   // that behavior even though this remake draws flat colors instead of PNGs.
-  static const List<Color> _blockCrushColors = [
+  static const List<Color> _classicColors = [
     pink,
     blue,
     cyan,
@@ -40,6 +40,6 @@ class GameColors {
     Color(0xFFEC407A),
   ];
 
-  static Color blockCrushColor(int oneBasedIndex) =>
-      _blockCrushColors[(oneBasedIndex - 1) % _blockCrushColors.length];
+  static Color classicColor(int oneBasedIndex) =>
+      _classicColors[(oneBasedIndex - 1) % _classicColors.length];
 }

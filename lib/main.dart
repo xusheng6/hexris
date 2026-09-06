@@ -35,13 +35,11 @@ void main() async {
   final rules = savedState != null && Storage.hasRulesPreference
       ? GameRules.values.firstWhere(
           (r) => r.name == savedState!['rules'],
-          orElse: () => Storage.blockCrushRulesEnabled
-              ? GameRules.blockCrushBlitz
+          orElse: () => Storage.classicRulesEnabled
+              ? GameRules.classic
               : GameRules.modern,
         )
-      : (Storage.blockCrushRulesEnabled
-            ? GameRules.blockCrushBlitz
-            : GameRules.modern);
+      : (Storage.classicRulesEnabled ? GameRules.classic : GameRules.modern);
   final highScore = await Storage.loadHighScore(mode, rules: rules);
   final highScoreDate = await Storage.loadHighScoreDate(mode, rules: rules);
 
@@ -66,7 +64,7 @@ class HexrisApp extends StatefulWidget {
     required this.initialHighScore,
     this.initialHighScoreDate,
     this.savedState,
-    this.initialRules = GameRules.blockCrushBlitz,
+    this.initialRules = GameRules.modern,
   });
 
   @override
