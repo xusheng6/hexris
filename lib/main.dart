@@ -32,14 +32,9 @@ void main() async {
           orElse: () => GameMode.hex,
         )
       : GameMode.hex;
-  final rules = savedState != null && Storage.hasRulesPreference
-      ? GameRules.values.firstWhere(
-          (r) => r.name == savedState!['rules'],
-          orElse: () => Storage.classicRulesEnabled
-              ? GameRules.classic
-              : GameRules.modern,
-        )
-      : (Storage.classicRulesEnabled ? GameRules.classic : GameRules.modern);
+  final rules = Storage.classicRulesEnabled
+      ? GameRules.classic
+      : GameRules.modern;
   final highScore = await Storage.loadHighScore(mode, rules: rules);
   final highScoreDate = await Storage.loadHighScoreDate(mode, rules: rules);
 

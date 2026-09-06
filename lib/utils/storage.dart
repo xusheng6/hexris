@@ -92,8 +92,6 @@ class Storage {
 
   static bool get classicRulesEnabled =>
       _prefs?.getBool('classicRulesEnabled') ?? false;
-  static bool get hasRulesPreference =>
-      _prefs?.containsKey('classicRulesEnabled') ?? false;
   static set classicRulesEnabled(bool value) =>
       _prefs?.setBool('classicRulesEnabled', value);
 }
