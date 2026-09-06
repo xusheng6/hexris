@@ -35,6 +35,10 @@ See [docs/block-crush-blitz-rules.md](docs/block-crush-blitz-rules.md) for the
 recovered mechanics, complete probability tables, and differences from modern
 Hexris.
 
+The repository also includes trained and search-based hex agents, reproducible
+benchmark tooling, and an in-app best-game replay viewer. See
+[docs/hex-ai.md](docs/hex-ai.md).
+
 ## Building
 
 ```bash

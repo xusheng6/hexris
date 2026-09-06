@@ -490,7 +490,7 @@ final List<HexPiece> blockCrushHexPieceCatalog = List.generate(
   growable: false,
 );
 
-int _blockCrushHexColorIndex(int catalogIndex) {
+int blockCrushHexColorIndex(int catalogIndex) {
   if (catalogIndex == 0) return 1;
   if (catalogIndex <= 3) return 2;
   if (catalogIndex <= 6) return 3;
@@ -573,7 +573,7 @@ List<TrayPiece> generateHexTray({
       final piece = blockCrushHexPieceCatalog[index];
       return TrayPiece(
         cells: piece.cells,
-        color: GameColors.blockCrushColor(_blockCrushHexColorIndex(index)),
+        color: GameColors.blockCrushColor(blockCrushHexColorIndex(index)),
       );
     }
     final piece = hexPieceCatalog[rng.nextInt(hexPieceCatalog.length)];

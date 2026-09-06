@@ -1,11 +1,18 @@
 import 'dart:math';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hexris/logic/hex_grid_logic.dart';
+import 'package:hexris/models/ai_replay.dart';
+import 'package:hexris/models/coordinates.dart';
 import 'package:hexris/models/game_state.dart';
 import 'package:hexris/models/piece.dart';
 import 'package:hexris/utils/storage.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Block Crush Blitz square catalog', () {
     test('matches the recovered family weights and orientation counts', () {
       expect(blockCrushSquareFamilies, hasLength(9));
@@ -91,4 +98,35 @@ void main() {
       expect(blockCrushLevelThreshold(10), 2100);
     });
   });
+
+  test(
+    'bundled AI replays contain only legal, score-consistent moves',
+    () async {
+      for (final asset in [
+        'assets/ai/replays/best_greedy.json',
+        'assets/ai/replays/best_learned.json',
+        'assets/ai/replays/best_expectimax.json',
+      ]) {
+        final raw = await rootBundle.loadString(asset);
+        final replay = AiReplay.fromJson(
+          jsonDecode(raw) as Map<String, dynamic>,
+        );
+        final grid = <HexCoord, Color>{};
+        var score = 0;
+        for (final step in replay.steps) {
+          final piece = blockCrushHexPieceCatalog[step.piece];
+          final anchor = HexCoord(step.anchorQ, step.anchorR);
+          expect(HexGridLogic.canPlace(grid, piece.cells, anchor), isTrue);
+          HexGridLogic.place(grid, piece.cells, anchor, Colors.white);
+          final lines = HexGridLogic.countCompletedLines(grid);
+          final cells = HexGridLogic.findCompletedLines(grid);
+          expect(lines, step.lines);
+          score += blockCrushClearScore(cells.length, lines);
+          expect(score, step.scoreAfter);
+          HexGridLogic.clearCells(grid, cells);
+        }
+        expect(score, replay.score);
+      }
+    },
+  );
 }

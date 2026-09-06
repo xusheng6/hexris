@@ -1,0 +1,114 @@
+{
+  "simulator": "Block Crush Blitz 1.7 hex",
+  "weights": [
+    -1.0809732544904622,
+    7.682446006689064,
+    -3.151059397166906,
+    0.20068763552444868,
+    2.040332487745702,
+    -0.07911287402950334,
+    -2.4585066160823255,
+    0.03490860701232789
+  ],
+  "features": [
+    "bias",
+    "clearReward",
+    "occupied",
+    "lineFillSquared",
+    "nearCompleteLines",
+    "exposureSquared",
+    "sealedEmptyCells",
+    "mobility"
+  ],
+  "training": [
+    {
+      "generation": 1,
+      "fitness": 3356.5
+    },
+    {
+      "generation": 2,
+      "fitness": 4765.566666666667
+    },
+    {
+      "generation": 3,
+      "fitness": 2674.7666666666664
+    },
+    {
+      "generation": 4,
+      "fitness": 2221.0
+    },
+    {
+      "generation": 5,
+      "fitness": 2615.2
+    },
+    {
+      "generation": 6,
+      "fitness": 2589.133333333333
+    }
+  ],
+  "benchmarkSeeds": [
+    20000,
+    20001,
+    20002,
+    20003,
+    20004,
+    20005,
+    20006,
+    20007,
+    20008,
+    20009,
+    20010,
+    20011,
+    20012,
+    20013,
+    20014,
+    20015,
+    20016,
+    20017,
+    20018,
+    20019
+  ],
+  "benchmarks": [
+    {
+      "agent": "random",
+      "games": 20,
+      "meanScore": 49.75,
+      "medianScore": 18.5,
+      "minScore": 0,
+      "maxScore": 206,
+      "meanMoves": 14.0
+    },
+    {
+      "agent": "greedy",
+      "games": 20,
+      "meanScore": 1055.3,
+      "medianScore": 899.5,
+      "minScore": 98,
+      "maxScore": 2993,
+      "meanMoves": 116.05
+    },
+    {
+      "agent": "learned",
+      "games": 20,
+      "meanScore": 1061.95,
+      "medianScore": 661.0,
+      "minScore": 98,
+      "maxScore": 3882,
+      "meanMoves": 115.3
+    },
+    {
+      "agent": "expectimax",
+      "games": 20,
+      "meanScore": 3721.55,
+      "medianScore": 2537.0,
+      "minScore": 344,
+      "maxScore": 10346,
+      "meanMoves": 369.8
+    }
+  ],
+  "replays": [
+    "ai_results/replays/best_greedy.json",
+    "ai_results/replays/best_learned.json",
+    "ai_results/replays/best_expectimax.json"
+  ]
+}
