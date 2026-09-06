@@ -32,6 +32,7 @@ class _AiReplayScreenState extends State<AiReplayScreen> {
       'Expectimax (best)',
       'assets/ai/replays/best_expectimax.json',
     ),
+    _ReplayChoice('Stochastic rollout', 'assets/ai/replays/best_rollout.json'),
     _ReplayChoice('Trained value model', 'assets/ai/replays/best_learned.json'),
     _ReplayChoice('Greedy heuristic', 'assets/ai/replays/best_greedy.json'),
   ];

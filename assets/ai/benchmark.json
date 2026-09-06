@@ -107,8 +107,31 @@
     }
   ],
   "replays": [
-    "ai_results/replays/best_greedy.json",
-    "ai_results/replays/best_learned.json",
-    "ai_results/replays/best_expectimax.json"
-  ]
+    "assets/ai/replays/best_greedy.json",
+    "assets/ai/replays/best_learned.json",
+    "assets/ai/replays/best_expectimax.json",
+    "assets/ai/replays/best_rollout.json"
+  ],
+  "rolloutComparison": {
+    "games": 20,
+    "sameSeedsAsBenchmark": true,
+    "rolloutWins": 11,
+    "ties": 0,
+    "expectimax": {
+      "meanScore": 3721.55,
+      "medianScore": 2537.0,
+      "lowerQuartile": 908.5,
+      "upperQuartile": 5132.5,
+      "meanMoves": 369.8,
+      "runtimeSeconds": 41.8
+    },
+    "rollout": {
+      "meanScore": 3256.9,
+      "medianScore": 2777.0,
+      "lowerQuartile": 1282.5,
+      "upperQuartile": 4168.5,
+      "meanMoves": 321.6,
+      "runtimeSeconds": 98.2
+    }
+  }
 }

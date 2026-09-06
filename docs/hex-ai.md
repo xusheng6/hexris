@@ -20,6 +20,9 @@ for bit.
 - **Expectimax** evaluates the four strongest first-ply candidates, samples
   three equally likely replacement pieces, and evaluates the best response for
   each sampled outcome. It combines immediate and expected next-ply value.
+- **Stochastic rollout** follows the three strongest root moves through two
+  independently sampled four-move futures, using the learned value policy for
+  decisions inside each rollout. This is a longer-horizon Monte Carlo search.
 
 Value features include immediate clear reward, occupied-cell count, squared
 line fill, nearly complete lines, boundary exposure, sealed empty cells, and
@@ -44,6 +47,13 @@ slightly improved mean score over the hand-authored greedy policy and had a
 lower median, so the evidence does not establish that training alone produced
 a generally stronger player. Search produced the material improvement.
 
+A subsequent paired 20-seed comparison tested stochastic rollout against
+expectimax. Rollout had a higher median (2,777 vs 2,537), a higher lower
+quartile (1,282.5 vs 908.5), and won 11 of 20 paired seeds. Expectimax retained
+the higher mean (3,721.55 vs 3,256.90) and ran in 41.8 seconds versus rollout's
+98.2 seconds. Rollout is therefore more robust in a typical run, while
+expectimax remains better for expected score and computational efficiency.
+
 ## Reproducing or extending the run
 
 From the repository root:
@@ -55,8 +65,8 @@ python3 tools/hex_ai.py \
 ```
 
 The command writes `benchmark.json` plus the best replay found for greedy,
-learned, and expectimax agents. Increase the game count and training population
-for a more stable comparison; expectimax is the slowest policy.
+learned, expectimax, and rollout agents. Increase the game count and training
+population for a more stable comparison; rollout is the slowest policy.
 
 ## Replays
 
@@ -69,6 +79,7 @@ games have these final scores:
 | greedy | 2,191 | 229 |
 | learned | 2,437 | 256 |
 | expectimax | 5,975 | 584 |
+| stochastic rollout | 4,887 | 472 |
 
 A replay records the seed, actual piece stream, chosen tray slot, piece catalog
 index, anchor, replacement, clears, and cumulative score for every move. The

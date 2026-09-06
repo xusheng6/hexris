@@ -199,6 +199,58 @@ class SampledExpectimaxAgent(ValueAgent):
         return best
 
 
+class RolloutAgent(ValueAgent):
+    """Monte Carlo lookahead with a greedy default policy.
+
+    Each promising root action is followed through several independently
+    sampled replacement streams. This searches farther than two-ply
+    expectimax while keeping the branching factor bounded.
+    """
+
+    def __init__(self, weights=HAND_WEIGHTS, width=3, rollouts=2, depth=4):
+        super().__init__(weights, "rollout")
+        self.width = width
+        self.rollouts = rollouts
+        self.depth = depth
+
+    def choose(self, board, tray, rng):
+        candidates = self.ranked(board, tray)[: self.width]
+        if not candidates:
+            return None
+        best_action = candidates[0][1]
+        best_value = -math.inf
+        for immediate_value, action, result in candidates:
+            total = 0.0
+            for _ in range(self.rollouts):
+                rollout_board = result.board
+                rollout_tray = list(tray)
+                rollout_tray[action[0]] = rng.randrange(len(PIECES))
+                discounted_reward = float(result.reward)
+                discount = 0.92
+                survived = 0
+                for _depth in range(1, self.depth):
+                    ranked = self.ranked(rollout_board, tuple(rollout_tray))
+                    if not ranked:
+                        discounted_reward -= 250.0 * discount
+                        break
+                    _, next_action, next_result = ranked[0]
+                    discounted_reward += discount * next_result.reward
+                    survived += 1
+                    rollout_board = next_result.board
+                    rollout_tray[next_action[0]] = rng.randrange(len(PIECES))
+                    discount *= 0.92
+                terminal = dot(
+                    self.weights,
+                    features(rollout_board, 0, tuple(rollout_tray)),
+                )
+                total += discounted_reward + 0.12 * terminal + survived * 2.0
+            value = total / self.rollouts + 0.08 * immediate_value
+            if value > best_value:
+                best_value = value
+                best_action = action
+        return best_action
+
+
 def play(agent: Agent, seed: int, max_moves=3000, record=False):
     rng = random.Random(seed)
     policy_rng = random.Random(seed ^ 0xB10CCB17)
@@ -300,7 +352,8 @@ def main():
         )
     agents = [
         RandomAgent(), ValueAgent(HAND_WEIGHTS, "greedy"),
-        ValueAgent(learned_weights, "learned"), SampledExpectimaxAgent(learned_weights),
+        ValueAgent(learned_weights, "learned"),
+        SampledExpectimaxAgent(learned_weights), RolloutAgent(learned_weights),
     ]
     seeds = list(range(20000, 20000 + args.games))
     benchmarks = []
