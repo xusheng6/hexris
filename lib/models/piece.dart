@@ -443,6 +443,74 @@ const List<WeightedSquarePieceFamily> classicSquareFamilies = [
   ),
 ];
 
+// The user-facing square mode does not use the weighted family table above.
+// It selects uniformly from a progressively unlocked prefix of this recovered
+// 31-entry catalog. The order and color indices match the original binary.
+const List<String> _classicSquareMasks = [
+  '0000000000001000000000000',
+  '0000000000011100000000000',
+  '0000000100001000010000100',
+  '0000000000001100010000000',
+  '0000000000001100011000000',
+  '0000001110000100001000000',
+  '0000000000111110000000000',
+  '0000001110011100111000000',
+  '0000001000011100000000000',
+  '0000000000001000010000000',
+  '0000000100011100000000000',
+  '0000000000011000000000000',
+  '0000000100001000010000000',
+  '0000000110011000000000000',
+  '0000000000011000010000000',
+  '0000000100001100001000000',
+  '0000000000111100000000000',
+  '0010000100001000010000100',
+  '0000001110010000100000000',
+  '0000000100001000110000000',
+  '0000000100011000010000000',
+  '0000000100001100000000000',
+  '0000000100011000000000000',
+  '0000000010000100111000000',
+  '0000001000010000111000000',
+  '0000001100001100000000000',
+  '0000000010001100010000000',
+  '0000000000011100001000000',
+  '0000000110001000010000000',
+  '0000000000011100010000000',
+  '0000000100001100010000000',
+];
+
+const List<int> _classicSquareColorIndices = [
+  1, 3, 4, 5, 6, 8, 10, 12, 9, 2, 11, 2, 3, 7, 5, 7,
+  4, 10, 8, 9, 11, 5, 5, 8, 8, 7, 7, 9, 9, 11, 11,
+];
+
+List<SquareCoord> _decodeClassicSquareMask(String mask) {
+  final raw = <SquareCoord>[];
+  for (var row = 0; row < 5; row++) {
+    for (var col = 0; col < 5; col++) {
+      if (mask[row * 5 + col] == '1') raw.add(SquareCoord(row, col));
+    }
+  }
+  final minRow = raw.map((cell) => cell.row).reduce(min);
+  final minCol = raw.map((cell) => cell.col).reduce(min);
+  return raw
+      .map((cell) => SquareCoord(cell.row - minRow, cell.col - minCol))
+      .toList(growable: false);
+}
+
+final List<SquarePiece> classicSquarePieceCatalog = List.generate(
+  _classicSquareMasks.length,
+  (index) => SquarePiece(
+    'classicSquare${index + 1}',
+    _decodeClassicSquareMask(_classicSquareMasks[index]),
+  ),
+  growable: false,
+);
+
+int classicSquarePoolSize(int level) =>
+    min(8 + max(1, level), classicSquarePieceCatalog.length);
+
 const List<String> _classicHexMasks = [
   '0000010000000000',
   '0010011000100000',
@@ -531,28 +599,17 @@ final _random = Random();
 
 List<TrayPiece> generateSquareTray({
   GameRules rules = GameRules.modern,
+  int level = 1,
   Random? random,
 }) {
   final rng = random ?? _random;
   return List.generate(3, (_) {
     if (rules == GameRules.classic) {
-      final totalWeight = classicSquareFamilies.fold<int>(
-        0,
-        (sum, family) => sum + family.weight,
-      );
-      var roll = rng.nextInt(totalWeight);
-      late WeightedSquarePieceFamily family;
-      for (final candidate in classicSquareFamilies) {
-        if (roll < candidate.weight) {
-          family = candidate;
-          break;
-        }
-        roll -= candidate.weight;
-      }
-      final piece = family.variants[rng.nextInt(family.variants.length)];
+      final index = rng.nextInt(classicSquarePoolSize(level));
+      final piece = classicSquarePieceCatalog[index];
       return TrayPiece(
         cells: piece.cells,
-        color: GameColors.classicColor(family.originalColorIndex),
+        color: GameColors.classicColor(_classicSquareColorIndices[index]),
       );
     }
     final piece = squarePieceCatalog[rng.nextInt(squarePieceCatalog.length)];

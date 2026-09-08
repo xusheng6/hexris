@@ -13,12 +13,14 @@ class _UndoSnapshot {
   final Map<HexCoord, Color>? hexGrid;
   final List<TrayPiece> tray;
   final int score;
+  final int level;
 
   _UndoSnapshot({
     this.squareGrid,
     this.hexGrid,
     required this.tray,
     required this.score,
+    required this.level,
   });
 }
 
@@ -36,6 +38,7 @@ class GameState extends ChangeNotifier {
   late List<TrayPiece> tray;
 
   int score = 0;
+  int level = 1;
   int highScore = 0;
   DateTime? highScoreDate;
   bool isGameOver = false;
@@ -76,7 +79,7 @@ class GameState extends ChangeNotifier {
 
   void _generateTray() {
     tray = mode == GameMode.square
-        ? generateSquareTray(rules: rules)
+        ? generateSquareTray(rules: rules, level: level)
         : generateHexTray(rules: rules);
   }
 
@@ -108,6 +111,7 @@ class GameState extends ChangeNotifier {
         hexGrid: mode == GameMode.hex ? _copyHexGrid() : null,
         tray: _copyTray(),
         score: score,
+        level: level,
       ),
     );
   }
@@ -123,6 +127,7 @@ class GameState extends ChangeNotifier {
     }
     tray = snapshot.tray;
     score = snapshot.score;
+    level = snapshot.level;
     isGameOver = false;
     ghostCells = {};
     _persist();
@@ -132,6 +137,7 @@ class GameState extends ChangeNotifier {
   void switchMode(GameMode newMode) {
     mode = newMode;
     score = 0;
+    level = 1;
     isGameOver = false;
     cellsToClear = {};
     ghostCells = {};
@@ -152,6 +158,7 @@ class GameState extends ChangeNotifier {
     rules = newRules;
     Storage.classicRulesEnabled = rules == GameRules.classic;
     score = 0;
+    level = 1;
     isGameOver = false;
     isAnimating = false;
     cellsToClear = {};
@@ -226,6 +233,7 @@ class GameState extends ChangeNotifier {
       score += rules == GameRules.classic
           ? classicClearScore(completed.length, lineCount)
           : completed.length + (lineCount > 1 ? lineCount * 10 : 0);
+      _advanceClassicLevel();
       FeedbackService.trigger(
         lineCount > 1 ? GameSound.combo : GameSound.clear,
       );
@@ -325,7 +333,7 @@ class GameState extends ChangeNotifier {
     for (int i = 0; i < tray.length; i++) {
       if (tray[i].isPlaced) {
         final catalog = mode == GameMode.square
-            ? generateSquareTray(rules: rules)
+            ? generateSquareTray(rules: rules, level: level)
             : generateHexTray(rules: rules);
         tray[i] = catalog[0]; // grab one fresh piece
       }
@@ -361,8 +369,14 @@ class GameState extends ChangeNotifier {
     }
   }
 
+  void _advanceClassicLevel() {
+    if (rules != GameRules.classic) return;
+    if (score > classicLevelThreshold(level)) level++;
+  }
+
   void reset() {
     score = 0;
+    level = 1;
     isGameOver = false;
     cellsToClear = {};
     ghostCells = {};
@@ -395,6 +409,7 @@ class GameState extends ChangeNotifier {
       'mode': mode.name,
       'rules': rules.name,
       'score': score,
+      'level': level,
       'isGameOver': isGameOver,
       if (mode == GameMode.square)
         'squareGrid': squareGrid
@@ -443,6 +458,7 @@ class GameState extends ChangeNotifier {
         orElse: () => rules,
       );
       score = json['score'] as int? ?? 0;
+      level = json['level'] as int? ?? classicLevelForScore(score);
       isGameOver = json['isGameOver'] as bool? ?? false;
 
       squareGrid = SquareGridLogic.createEmptyGrid();
@@ -502,4 +518,13 @@ int classicLevelThreshold(int level) {
     threshold += (current ~/ 10) * 40 + 70 + 30 * (current - 1);
   }
   return threshold;
+}
+
+/// Best-effort migration for saves created before level was persisted.
+int classicLevelForScore(int score) {
+  var level = 1;
+  while (score > classicLevelThreshold(level)) {
+    level++;
+  }
+  return level;
 }

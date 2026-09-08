@@ -7,6 +7,15 @@ import 'package:hexris/utils/storage.dart';
 
 void main() {
   group('Classic square catalog', () {
+    test('unlocks the recovered 31-entry catalog progressively', () {
+      expect(classicSquarePieceCatalog, hasLength(31));
+      expect(classicSquarePoolSize(1), 9);
+      expect(classicSquarePoolSize(2), 10);
+      expect(classicSquarePoolSize(22), 30);
+      expect(classicSquarePoolSize(23), 31);
+      expect(classicSquarePoolSize(100), 31);
+    });
+
     test('matches the recovered family weights and orientation counts', () {
       expect(classicSquareFamilies, hasLength(9));
       expect(
@@ -96,6 +105,10 @@ void main() {
       expect(classicLevelThreshold(2), 180);
       expect(classicLevelThreshold(9), 1720);
       expect(classicLevelThreshold(10), 2100);
+      expect(classicLevelForScore(80), 1);
+      expect(classicLevelForScore(81), 2);
+      expect(classicLevelForScore(180), 2);
+      expect(classicLevelForScore(181), 3);
     });
   });
 }
